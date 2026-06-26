@@ -27,6 +27,12 @@ if [[ -z "${BASE_SHA:-}" ]]; then
   exit 0
 fi
 
+# Diff against the actual merge-base of the PR head and its base branch, falling
+# back to the base tip when the merge-base cannot be computed (shallow checkout).
+base_ref="${BASE_SHA}"
+merge_base="$(git merge-base "${BASE_SHA}" HEAD 2>/dev/null || true)"
+[[ -n "${merge_base}" ]] && base_ref="${merge_base}"
+
 pipe_args=()
 while IFS= read -r line; do
   [[ -n "${line}" ]] && pipe_args+=(-p "${line}")
@@ -43,12 +49,12 @@ fi
 base_json="${RSIGMA_WORK}/fields-base.json"
 echo '{"fields":[]}' >"${base_json}"
 wt="$(mktemp -d)"
-if git worktree add --detach "${wt}" "${BASE_SHA}" >/dev/null 2>&1; then
+if git worktree add --detach "${wt}" "${base_ref}" >/dev/null 2>&1; then
   (cd "${wt}" && rsigma rule fields --rules "${RSIGMA_RULES}" ${pipe_args[@]+"${pipe_args[@]}"} --output-format json) \
     >"${base_json}" 2>/dev/null || echo '{"fields":[]}' >"${base_json}"
   git worktree remove --force "${wt}" >/dev/null 2>&1 || true
 else
-  echo "rsigma-action: could not check out base ${BASE_SHA}; treating all fields as added"
+  echo "rsigma-action: could not check out base ${base_ref}; treating all fields as added"
 fi
 rm -rf "${wt}" 2>/dev/null || true
 
@@ -70,5 +76,5 @@ removed="$(jq 'length' <<<"${removed_arr}")"
   echo "removed=${removed}"
 } >>"${GITHUB_OUTPUT}"
 
-echo "rsigma-action: fields drift +${added} -${removed} (vs ${BASE_SHA})"
+echo "rsigma-action: fields drift +${added} -${removed} (vs ${base_ref})"
 exit 0
