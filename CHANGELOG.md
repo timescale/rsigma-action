@@ -2,7 +2,7 @@
 
 All notable changes to this action are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The action versions independently of the rsigma engine; each release declares its minimum supported rsigma version.
 
-## [Unreleased]
+## [1.0.0] - 2026-06-26
 
 ### Added
 
