@@ -1,0 +1,3 @@
+::error file=rules/lint_warnings.yml,line=4,title=missing_description::rule has no description
+::warning file=rules/lint_warnings.yml,title=missing_references::rule has no references
+::warning file=rules/lint_warnings.yml,title=missing_date::rule has no date

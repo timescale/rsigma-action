@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "rules_total": 3,
+    "rules_tagged": 3,
+    "rules_untagged": 0,
+    "techniques": 4,
+    "subtechniques": 2,
+    "tactics": 1
+  },
+  "techniques": [],
+  "targets": {
+    "targets_total": 5,
+    "covered": 4,
+    "uncovered": ["T1003"],
+    "covered_via_subtechnique": []
+  }
+}

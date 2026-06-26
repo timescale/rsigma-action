@@ -1,0 +1,7 @@
+# ATT&CK techniques this fixture ruleset is meant to cover, one per line.
+# T1003 is intentionally uncovered so --fail-on-gaps has something to report.
+T1059.001
+T1059
+T1204.002
+T1087
+T1003

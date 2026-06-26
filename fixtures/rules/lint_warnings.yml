@@ -1,0 +1,19 @@
+# A deliberately under-documented (but valid and parseable) rule, so the lint
+# step has findings to annotate. It omits the recommended description, author,
+# date, references, and falsepositives metadata.
+title: Renamed Net Utility
+id: 33333333-3333-3333-3333-333333333333
+status: experimental
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    OriginalFileName: 'net.exe'
+  filter:
+    Image|endswith: '\net.exe'
+  condition: selection and not filter
+level: low
+tags:
+  - attack.discovery
+  - attack.t1087
