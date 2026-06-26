@@ -1,0 +1,4 @@
+{"EventID":1,"Image":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","CommandLine":"powershell.exe -enc ZQBjAGgAbwAgAGgAaQA=","ParentImage":"C:\\Windows\\explorer.exe"}
+{"EventID":1,"Image":"C:\\Windows\\System32\\cmd.exe","CommandLine":"cmd /c dir","ParentImage":"C:\\Windows\\explorer.exe"}
+{"EventID":1,"Image":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","CommandLine":"powershell -enc AGIAYQByAA==","ParentImage":"C:\\Program Files\\Microsoft Office\\root\\Office16\\winword.exe"}
+{"EventID":1,"Image":"C:\\Windows\\System32\\wscript.exe","CommandLine":"wscript C:\\Users\\j\\AppData\\Local\\Temp\\invoice.vbs","ParentImage":"C:\\Program Files\\Microsoft Office\\root\\Office16\\winword.exe"}

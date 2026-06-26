@@ -1,0 +1,98 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    name: e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    permissions:
+      contents: read # checkout + read public rsigma releases via the token
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # the fields-drift diff needs the merge-base on PRs
+
+      # The gate outcome can depend on the rsigma lint catalogue's severities,
+      # so the assertions key off concrete outputs and artifacts rather than the
+      # overall pass/fail. The failure-path job below covers the gate failing.
+      - name: Run rsigma-action against fixtures
+        id: rsigma
+        continue-on-error: true
+        uses: ./
+        with:
+          version: v0.17.0
+          rules: fixtures/rules
+          lint-fail-level: error
+          corpus: fixtures/corpus
+          expectations: fixtures/expectations.yml
+          coverage: "true"
+          coverage-targets: fixtures/targets.txt
+          fail-on-gaps: "false"
+          pr-comment: "false"
+
+      - name: Assert outputs and artifacts
+        shell: bash
+        env:
+          RSIGMA_VERSION: ${{ steps.rsigma.outputs.rsigma-version }}
+          BACKTEST_PASSED: ${{ steps.rsigma.outputs.backtest-passed }}
+          REPORT_PATH: ${{ steps.rsigma.outputs.report-path }}
+          NAVIGATOR_PATH: ${{ steps.rsigma.outputs.navigator-path }}
+        run: bash tests/assert-e2e.sh
+
+  gate-fails:
+    name: gate fails on a bad expectation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout + read public rsigma releases via the token
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run rsigma-action with a failing expectation
+        id: rsigma
+        continue-on-error: true
+        uses: ./
+        with:
+          version: v0.17.0
+          rules: fixtures/rules
+          lint: "false"
+          validate: "false"
+          fields-diff: "false"
+          corpus: fixtures/corpus
+          expectations: fixtures/expectations-failing.yml
+          pr-comment: "false"
+
+      - name: Assert the gate failed
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.rsigma.outcome }}
+          BACKTEST_PASSED: ${{ steps.rsigma.outputs.backtest-passed }}
+        run: |
+          set -euo pipefail
+          if [[ "${STEP_OUTCOME}" != "failure" ]]; then
+            echo "expected the action to fail the gate, got '${STEP_OUTCOME}'"
+            exit 1
+          fi
+          if [[ "${BACKTEST_PASSED}" != "false" ]]; then
+            echo "expected backtest-passed=false, got '${BACKTEST_PASSED}'"
+            exit 1
+          fi
+          echo "gate failed as expected"

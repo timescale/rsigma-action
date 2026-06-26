@@ -1,0 +1,11 @@
+# Passing expectations for the green-path e2e run. Over the two corpus files,
+# the PowerShell rule fires twice and the Office-child rule fires once.
+expectations:
+  - rule: PowerShell Encoded Command
+    at_least: 1
+  - rule: Suspicious Office Child Process
+    exactly: 1
+  # Scoped to a single corpus file: the benign file must produce no fires.
+  - rule: PowerShell Encoded Command
+    corpus: file-b.ndjson
+    exactly: 0

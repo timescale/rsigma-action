@@ -1,0 +1,2 @@
+{"EventID":1,"Image":"C:\\Windows\\System32\\notepad.exe","CommandLine":"notepad.exe report.txt","ParentImage":"C:\\Windows\\explorer.exe"}
+{"EventID":1,"Image":"C:\\Windows\\System32\\calc.exe","CommandLine":"calc.exe","ParentImage":"C:\\Windows\\explorer.exe"}

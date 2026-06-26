@@ -1,0 +1,38 @@
+name: Release
+
+# Publishing a GitHub Release (and ticking "Publish this Action to the
+# Marketplace" in the UI) is the trigger. This workflow keeps the floating
+# `vN` major tag pointed at the released commit so consumers can pin
+# `timescale/rsigma-action@v1`. `workflow_dispatch` allows a manual re-point.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to point the floating major tag at (e.g. v1.2.3).
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: release-major-tag
+  cancel-in-progress: false
+
+jobs:
+  major-tag:
+    name: Update floating major tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create/update the major tag ref via the API
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Move the floating major tag
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/update-major-tag.sh

@@ -1,0 +1,32 @@
+{
+  "summary": {
+    "files_checked": 3,
+    "files_failed": 1,
+    "errors": 1,
+    "warnings": 2,
+    "infos": 0
+  },
+  "findings": [
+    {
+      "path": "rules/lint_warnings.yml",
+      "severity": "error",
+      "rule": "missing_description",
+      "message": "rule has no description",
+      "line": 4
+    },
+    {
+      "path": "rules/lint_warnings.yml",
+      "severity": "warning",
+      "rule": "missing_references",
+      "message": "rule has no references",
+      "line": null
+    },
+    {
+      "path": "rules/lint_warnings.yml",
+      "severity": "warning",
+      "rule": "missing_date",
+      "message": "rule has no date",
+      "line": null
+    }
+  ]
+}

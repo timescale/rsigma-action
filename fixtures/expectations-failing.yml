@@ -1,0 +1,6 @@
+# Expectations with one deliberate failure, used by the failure-path e2e job to
+# prove the gate fails (and the comment renders a failed row). The PowerShell
+# rule actually fires twice, so the `exactly: 5` bound fails.
+expectations:
+  - rule: PowerShell Encoded Command
+    exactly: 5
