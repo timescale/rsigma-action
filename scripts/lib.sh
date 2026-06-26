@@ -5,9 +5,9 @@
 # and write to stdout, so the golden tests can exercise them without a rsigma
 # binary or a live runner.
 
-# Map a runner OS/arch pair to the rsigma release target triple.
+# Map the runner OS/arch to the rsigma release target triple.
 rsigma_target() {
-  local os="${1:-${RUNNER_OS:-}}" arch="${2:-${RUNNER_ARCH:-}}"
+  local os="${RUNNER_OS:-}" arch="${RUNNER_ARCH:-}"
   case "${os}/${arch}" in
     Linux/X64) echo "x86_64-unknown-linux-gnu" ;;
     Linux/ARM64) echo "aarch64-unknown-linux-gnu" ;;

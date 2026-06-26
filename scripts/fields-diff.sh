@@ -33,7 +33,8 @@ while IFS= read -r line; do
 done <<<"${RSIGMA_PIPELINES}"
 
 head_json="${RSIGMA_WORK}/fields-head.json"
-if ! rsigma rule fields --rules "${RSIGMA_RULES}" "${pipe_args[@]}" --output-format json >"${head_json}" 2>/dev/null; then
+# `${arr[@]+...}` keeps an empty array safe under `set -u` on bash 3.2 (macOS).
+if ! rsigma rule fields --rules "${RSIGMA_RULES}" ${pipe_args[@]+"${pipe_args[@]}"} --output-format json >"${head_json}" 2>/dev/null; then
   echo "rsigma-action: head fields run failed; skipping fields drift"
   emit_zero
   exit 0
@@ -43,7 +44,7 @@ base_json="${RSIGMA_WORK}/fields-base.json"
 echo '{"fields":[]}' >"${base_json}"
 wt="$(mktemp -d)"
 if git worktree add --detach "${wt}" "${BASE_SHA}" >/dev/null 2>&1; then
-  (cd "${wt}" && rsigma rule fields --rules "${RSIGMA_RULES}" "${pipe_args[@]}" --output-format json) \
+  (cd "${wt}" && rsigma rule fields --rules "${RSIGMA_RULES}" ${pipe_args[@]+"${pipe_args[@]}"} --output-format json) \
     >"${base_json}" 2>/dev/null || echo '{"fields":[]}' >"${base_json}"
   git worktree remove --force "${wt}" >/dev/null 2>&1 || true
 else
