@@ -1,0 +1,3 @@
+# rsigma rule fmt writes LF line endings, so the format fixtures must not be
+# converted to CRLF on Windows checkouts.
+fixtures/fmt/** text eol=lf

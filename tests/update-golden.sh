@@ -17,6 +17,7 @@ export RSIGMA_VERSION="v0.17.0"
 export RUN_URL="https://github.com/timescale/rsigma-action/actions/runs/123"
 
 rsigma_annotations_from_lint "${FIXTURE_WORK}/lint.json" >"${EXPECTED}/annotations.txt"
+rsigma_annotations_from_fmt "${FIXTURE_WORK}/fmt.out" >"${EXPECTED}/fmt-annotations.txt"
 rsigma_render_comment >"${EXPECTED}/comment.md"
 
 echo "rsigma-action: regenerated goldens in ${EXPECTED}"

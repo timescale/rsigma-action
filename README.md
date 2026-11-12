@@ -1,6 +1,6 @@
 # rsigma-action
 
-GitHub Action for Detection-as-Code (DaC) powered by [RSigma](https://github.com/timescale/rsigma): lint, validate, fields-drift, backtest, and ATT&CK coverage in one CI gate.
+GitHub Action for Detection-as-Code (DaC) powered by [RSigma](https://github.com/timescale/rsigma): lint, format check, validate, fields-drift, backtest, and ATT&CK coverage in one CI gate.
 
 This composite action turns a Sigma rule repository into a pull-request gate. It installs a verified rsigma release, runs the detection-as-code checks, annotates findings on the diff, keeps a single sticky summary comment up to date, and uploads the backtest and ATT&CK Navigator reports as artifacts.
 
@@ -25,18 +25,19 @@ jobs:
           rules: rules/
 ```
 
-The minimal run lints, validates, and diffs rule fields. Set `corpus` to add backtesting and `coverage: "true"` to add ATT&CK coverage.
+The minimal run lints, validates, and diffs rule fields. Set `fmt: "true"` to require the canonical rule layout, `corpus` to add backtesting, and `coverage: "true"` to add ATT&CK coverage.
 
 ## Full example
 
 ```yaml
 - uses: timescale/rsigma-action@v1
   with:
-    version: v0.17.0 # pin a release; the default `latest` resolves once then caches
+    version: v0.27.0 # pin a release; the default `latest` resolves once then caches
     rules: rules/
     pipelines: |
       ecs_windows
     lint-fail-level: warning
+    fmt: "true"
     sources: |
       sources/threat-intel.yml
     corpus: tests/corpus
@@ -54,10 +55,11 @@ The minimal run lints, validates, and diffs rule fields. Set `corpus` to add bac
 The action wraps shipped rsigma subcommands. Each step is independent and gated by an input toggle; a non-zero rsigma exit is recorded and surfaced by a final gate step, so the comment and artifacts always publish before the run fails.
 
 1. Lint: `rsigma rule lint <rules> --fail-level <level> --output-format json`. Findings become PR annotations generated from the stable JSON envelope (not text-scraping problem matchers), so each annotation carries the lint rule name as its title.
-2. Validate: `rsigma rule validate <rules> --resolve-sources [--source ...] [-p ...]`. Proves rules parse, compile, and that dynamic source references resolve.
-3. Fields drift: `rule fields` has no native diff, so the action runs it on HEAD and on the PR merge-base (in a temporary git worktree) and diffs the field-name sets. Non-blocking; it surfaces coverage drift in the comment. Runs on pull requests only.
-4. Backtest: `rsigma rule backtest --rules <rules> --corpus <corpus> [--expectations ...] [--unexpected ...] [-p ...] --junit backtest.xml --report backtest.json`. Runs only when `corpus` is set. The JUnit XML and JSON report upload as artifacts.
-5. Coverage: `rsigma rule coverage --rules <rules> --navigator layer.json [--targets ...] [--baseline ...] [--atomics ...] [--fail-on-gaps]`. The Navigator layer (format 4.5) uploads as an artifact, ready to load into the [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/).
+2. Format check: `rsigma rule fmt --check <rules>`. Runs only when `fmt` is `true`. Each file that is not in rsigma's canonical layout gets a warning annotation and fails the gate with exit `1`; run `rsigma rule fmt --write <rules>` locally to fix them. The formatter keeps comments and refuses any rewrite that would change what a rule means. With an rsigma older than `v0.27.0`, which has no `rule fmt`, the step prints a notice and skips. The canonical layout uses LF line endings, so on a Windows runner, where git checks files out with CRLF by default, add `*.yml text eol=lf` to the repository's `.gitattributes` or every rule is reported.
+3. Validate: `rsigma rule validate <rules> --resolve-sources [--source ...] [-p ...]`. Proves rules parse, compile, and that dynamic source references resolve.
+4. Fields drift: `rule fields` has no native diff, so the action runs it on HEAD and on the PR merge-base (in a temporary git worktree) and diffs the field-name sets. Non-blocking; it surfaces coverage drift in the comment. Runs on pull requests only.
+5. Backtest: `rsigma rule backtest --rules <rules> --corpus <corpus> [--expectations ...] [--unexpected ...] [-p ...] --junit backtest.xml --report backtest.json`. Runs only when `corpus` is set. The JUnit XML and JSON report upload as artifacts.
+6. Coverage: `rsigma rule coverage --rules <rules> --navigator layer.json [--targets ...] [--baseline ...] [--atomics ...] [--fail-on-gaps]`. The Navigator layer (format 4.5) uploads as an artifact, ready to load into the [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/).
 
 Exit codes follow the rsigma house scheme: `1` is findings (fails the gate), `2` is a rule error, and `3` is a config error. A `2`/`3` gets a distinct fail-fast annotation, so a broken expectations or rule file is never reported as a rule regression.
 
@@ -70,6 +72,7 @@ Exit codes follow the rsigma house scheme: `1` is findings (fails the gate), `2`
 | `pipelines` | unset | Pipeline names or paths (one per line), forwarded as repeated `-p`. |
 | `working-directory` | `.` | Repo-relative root for all paths. |
 | `lint` | `true` | Run the lint step. |
+| `fmt` | `false` | Run the format check step (`rsigma rule fmt --check`, rsigma `v0.27.0` or later). Off by default so existing workflows see no new failures. |
 | `validate` | `true` | Run the validate step. |
 | `fields-diff` | `true` | Run the merge-base fields-drift diff (pull requests only). |
 | `lint-fail-level` | `warning` | Forwarded to `rule lint --fail-level` (`error`/`warning`/`info`). The rsigma default is `error`; this action is deliberately stricter. |
@@ -93,6 +96,7 @@ Exit codes follow the rsigma house scheme: `1` is findings (fails the gate), `2`
 | `rsigma-version` | The resolved rsigma version that ran. |
 | `lint-errors` | Lint error count from the JSON envelope summary. |
 | `lint-warnings` | Lint warning count from the JSON envelope summary. |
+| `fmt-unformatted` | Number of rule files that are not in canonical format, from the format check step. |
 | `backtest-passed` | `true` when the backtest ran and all expectations passed, `false` otherwise. |
 | `junit-path` | Path to the backtest JUnit XML report, if produced. |
 | `report-path` | Path to the backtest JSON report, if produced. |
@@ -118,7 +122,7 @@ The install step downloads the `rsigma-<target>` archive from the [timescale/rsi
 
 - The fields-drift diff needs git history for the merge-base, so check out with `fetch-depth: 0`.
 - The action supports the six rsigma release targets: Linux, macOS, and Windows on amd64 and arm64.
-- Minimum rsigma version: `v0.17.0` (the release where `rule backtest` and `rule coverage` shipped). Older versions work for lint, validate, and fields-drift only.
+- Minimum rsigma version: `v0.17.0` (the release where `rule backtest` and `rule coverage` shipped). Older versions work for lint, validate, and fields-drift only. The format check needs `v0.27.0`, the release where `rule fmt` shipped.
 
 ## Pinning
 
@@ -132,7 +136,7 @@ The floating `v1` major tag is moved to each `v1.x.y` release. The `version` inp
 
 ## Development
 
-- `bash tests/run-golden.sh` runs the golden tests for the annotation and comment renderers (pure functions over JSON fixtures, no rsigma binary needed). Regenerate with `bash tests/update-golden.sh` after an intentional formatting change.
+- `bash tests/run-golden.sh` runs the golden tests for the annotation and comment renderers (pure functions over captured rsigma output, no rsigma binary needed). Regenerate with `bash tests/update-golden.sh` after an intentional formatting change.
 - `shellcheck -x scripts/*.sh tests/*.sh` must pass.
 - `.github/workflows/e2e.yml` runs the action against `fixtures/` on the ubuntu/macos/windows matrix.
 - `zizmor --pedantic` must pass on the workflows and `action.yml`.

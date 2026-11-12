@@ -5,7 +5,7 @@
 # Every `${{ ... }}` value reaches a script through `env:`, never inlined into a
 # `run:` body, so `zizmor --pedantic` finds no template-injection surface.
 name: RSigma Detection-as-Code
-description: Lint, validate, fields-drift, backtest, and ATT&CK coverage gate for Sigma rules, powered by rsigma.
+description: Lint, format check, validate, fields-drift, backtest, and ATT&CK coverage gate for Sigma rules, powered by rsigma.
 author: Tiger Data
 
 branding:
@@ -33,6 +33,10 @@ inputs:
     description: Run the lint step.
     required: false
     default: "true"
+  fmt:
+    description: Run the format check step (`rsigma rule fmt --check`, rsigma v0.27.0 or later). Off by default so existing workflows see no new failures.
+    required: false
+    default: "false"
   validate:
     description: Run the validate step.
     required: false
@@ -104,6 +108,9 @@ outputs:
   lint-warnings:
     description: Lint warning count from the JSON envelope summary.
     value: ${{ steps.lint.outputs.warnings }}
+  fmt-unformatted:
+    description: Number of rule files that are not in canonical format, from the format check step.
+    value: ${{ steps.fmt.outputs.unformatted }}
   backtest-passed:
     description: "`true` when the backtest ran and all expectations passed, `false` otherwise."
     value: ${{ steps.backtest.outputs.passed }}
@@ -161,6 +168,16 @@ runs:
         RSIGMA_FAIL_LEVEL: ${{ inputs.lint-fail-level }}
         RSIGMA_ANNOTATIONS: ${{ inputs.annotations }}
       run: bash "$GITHUB_ACTION_PATH/scripts/lint.sh"
+
+    - name: Format check
+      id: fmt
+      if: ${{ inputs.fmt == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        RSIGMA_RULES: ${{ inputs.rules }}
+        RSIGMA_ANNOTATIONS: ${{ inputs.annotations }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/fmt.sh"
 
     - name: Validate
       id: validate

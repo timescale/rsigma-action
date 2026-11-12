@@ -10,6 +10,11 @@
 | warning | `missing_references` | rules/lint_warnings.yml | rule has no references |
 | warning | `missing_date` | rules/lint_warnings.yml | rule has no date |
 
+### Format
+- 2 file(s) not in canonical format. Run `rsigma rule fmt --write` to rewrite them.
+  - `rules/proc_whoami.yml`
+  - `rules/net,dns:exfil.yml`
+
 ### Validate
 - Rules parse, compile, and dynamic sources resolve.
 

@@ -1,0 +1,2 @@
+::warning file=rules/proc_whoami.yml,title=rsigma fmt::File is not in canonical format; run rsigma rule fmt --write
+::warning file=rules/net%2Cdns%3Aexfil.yml,title=rsigma fmt::File is not in canonical format; run rsigma rule fmt --write
