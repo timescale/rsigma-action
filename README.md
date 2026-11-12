@@ -129,7 +129,7 @@ The install step downloads the `rsigma-<target>` archive from the [timescale/rsi
 For hardened consumers, pin the action by full commit SHA:
 
 ```yaml
-- uses: timescale/rsigma-action@<full-sha> # v1.0.0
+- uses: timescale/rsigma-action@<full-sha> # v1.1.0
 ```
 
 The floating `v1` major tag is moved to each `v1.x.y` release. The `version` input that selects the rsigma engine is independent of the action version, and pinning a concrete `version` (rather than `latest`) keeps runs reproducible.
