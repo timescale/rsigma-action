@@ -1,0 +1,18 @@
+title: Encoded PowerShell Command
+id: 44444444-4444-4444-4444-444444444444
+status: test
+description: Detects PowerShell started with an encoded command.
+author: rsigma-action fixtures
+date: 2026-11-12
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains: ' -enc '
+  condition: selection
+level: medium
+tags:
+  - attack.execution
+  - attack.t1059.001

@@ -56,6 +56,98 @@ jobs:
           NAVIGATOR_PATH: ${{ steps.rsigma.outputs.navigator-path }}
         run: bash tests/assert-e2e.sh
 
+  # Both runs share one job, so the second overwrites the fmt status the first
+  # recorded; the gate then reflects only the run being asserted.
+  fmt:
+    name: fmt (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    permissions:
+      contents: read # checkout + read public rsigma releases via the token
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Format check with an unformatted rule
+        id: unformatted
+        continue-on-error: true
+        uses: ./
+        with:
+          version: v0.27.0
+          rules: fixtures/fmt
+          lint: "false"
+          fmt: "true"
+          validate: "false"
+          fields-diff: "false"
+          pr-comment: "false"
+
+      - name: Assert the gate failed on the unformatted rule
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.unformatted.outcome }}
+          UNFORMATTED: ${{ steps.unformatted.outputs.fmt-unformatted }}
+          EXPECTED_OUTCOME: failure
+          EXPECTED_UNFORMATTED: "1"
+        run: bash tests/assert-fmt.sh
+
+      - name: Format check with a canonical rule
+        id: formatted
+        continue-on-error: true
+        uses: ./
+        with:
+          version: v0.27.0
+          rules: fixtures/fmt/formatted.yml
+          lint: "false"
+          fmt: "true"
+          validate: "false"
+          fields-diff: "false"
+          pr-comment: "false"
+
+      - name: Assert the gate passed on the canonical rule
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.formatted.outcome }}
+          UNFORMATTED: ${{ steps.formatted.outputs.fmt-unformatted }}
+          EXPECTED_OUTCOME: success
+          EXPECTED_UNFORMATTED: "0"
+        run: bash tests/assert-fmt.sh
+
+  fmt-skipped:
+    name: fmt skips on an rsigma without rule fmt
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout + read public rsigma releases via the token
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Format check on rsigma v0.17.0
+        id: rsigma
+        continue-on-error: true
+        uses: ./
+        with:
+          version: v0.17.0
+          rules: fixtures/fmt
+          lint: "false"
+          fmt: "true"
+          validate: "false"
+          fields-diff: "false"
+          pr-comment: "false"
+
+      - name: Assert the step skipped without failing the gate
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.rsigma.outcome }}
+          UNFORMATTED: ${{ steps.rsigma.outputs.fmt-unformatted }}
+          EXPECTED_OUTCOME: success
+          EXPECTED_UNFORMATTED: "0"
+        run: bash tests/assert-fmt.sh
+
   gate-fails:
     name: gate fails on a bad expectation
     runs-on: ubuntu-latest
