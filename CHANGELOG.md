@@ -6,7 +6,7 @@ All notable changes to this action are documented here. The format follows [Keep
 
 ### Added
 
-- A format check step, enabled with `fmt: "true"`, that runs `rsigma rule fmt --check` on the rules. Each file that is not in canonical format gets a warning annotation, the sticky PR comment lists the files, the new `fmt-unformatted` output reports the count, and the gate fails with exit `1`. The step needs rsigma `v0.27.0` or later and skips with a notice on older versions. It is off by default.
+- A format check step, enabled with `fmt: "true"`, that runs `rsigma rule fmt --check` on the rules. Each file that is not in canonical format gets a warning annotation, the sticky PR comment lists the files, the new `fmt-unformatted` output reports the count, and the gate fails with exit `1`. The step needs rsigma `v0.27.0` or later and skips with a notice on older versions. It is off by default. ([#4](https://github.com/timescale/rsigma-action/pull/4))
 
 ## [1.0.0] - 2026-06-26
 
