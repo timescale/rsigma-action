@@ -50,6 +50,46 @@ rsigma_annotations_from_lint() {
   ' "${file}"
 }
 
+# Escape a workflow-command property value such as `file=`.
+rsigma_escape_property() {
+  local s="$1"
+  s="${s//%/%25}"
+  s="${s//$'\r'/%0D}"
+  s="${s//$'\n'/%0A}"
+  s="${s//:/%3A}"
+  s="${s//,/%2C}"
+  printf '%s' "${s}"
+}
+
+# Print the paths from the `Would reformat: <path>` lines of `rule fmt --check`.
+rsigma_fmt_paths() {
+  local file="$1" line
+  [[ -s "${file}" ]] || return 0
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    line="${line%$'\r'}"
+    if [[ "${line}" == "Would reformat: "* ]]; then
+      printf '%s\n' "${line#Would reformat: }"
+    fi
+  done <"${file}"
+}
+
+# Count the files `rule fmt --check` would reformat.
+rsigma_fmt_count() {
+  local n=0
+  while IFS= read -r _; do
+    n=$((n + 1))
+  done < <(rsigma_fmt_paths "$1")
+  echo "${n}"
+}
+
+# Emit one warning annotation per file `rule fmt --check` would reformat.
+rsigma_annotations_from_fmt() {
+  local path
+  while IFS= read -r path; do
+    echo "::warning file=$(rsigma_escape_property "${path}"),title=rsigma fmt::File is not in canonical format; run rsigma rule fmt --write"
+  done < <(rsigma_fmt_paths "$1")
+}
+
 # Render the sticky PR comment markdown from the report files in $RSIGMA_WORK.
 # Every section is conditional on its report file existing, so a run that only
 # lints renders only the lint section. RSIGMA_VERSION and RUN_URL parameterize
@@ -78,6 +118,25 @@ rsigma_render_comment() {
       jq -r '.findings[]
         | "| \(.severity) | `\(.rule)` | \(.path)\(if .line then ":" + (.line|tostring) else "" end) | \(.message) |"' "${lint}"
     fi
+    echo ""
+  fi
+
+  if [[ -s "${work}/fmt.status" ]]; then
+    local frc fn
+    frc=$(cat "${work}/fmt.status")
+    fn=$(rsigma_fmt_count "${work}/fmt.out")
+    echo "### Format"
+    case "${frc}" in
+      0) echo "- All rule files are in canonical format." ;;
+      1)
+        echo "- ${fn} file(s) not in canonical format. Run \`rsigma rule fmt --write\` to rewrite them."
+        rsigma_fmt_paths "${work}/fmt.out" | while IFS= read -r path; do
+          echo "  - \`${path}\`"
+        done
+        ;;
+      skipped) echo "- Skipped: the installed rsigma has no \`rule fmt\` command (needs v0.27.0 or later)." ;;
+      *) echo "- The format check could not run (exit ${frc}). See the run log for the error." ;;
+    esac
     echo ""
   fi
 

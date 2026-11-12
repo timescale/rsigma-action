@@ -21,10 +21,11 @@ export RSIGMA_VERSION="v0.17.0"
 export RUN_URL="https://github.com/timescale/rsigma-action/actions/runs/123"
 
 rsigma_annotations_from_lint "${FIXTURE_WORK}/lint.json" >"${OUT}/annotations.txt"
+rsigma_annotations_from_fmt "${FIXTURE_WORK}/fmt.out" >"${OUT}/fmt-annotations.txt"
 rsigma_render_comment >"${OUT}/comment.md"
 
 status=0
-for name in annotations.txt comment.md; do
+for name in annotations.txt fmt-annotations.txt comment.md; do
   if diff -u "${EXPECTED}/${name}" "${OUT}/${name}"; then
     echo "ok: ${name}"
   else
