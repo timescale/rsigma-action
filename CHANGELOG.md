@@ -2,11 +2,12 @@
 
 All notable changes to this action are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The action versions independently of the rsigma engine; each release declares its minimum supported rsigma version.
 
-## [Unreleased]
+## [1.1.0] - 2026-11-12
 
 ### Added
 
 - A format check step, enabled with `fmt: "true"`, that runs `rsigma rule fmt --check` on the rules. Each file that is not in canonical format gets a warning annotation, the sticky PR comment lists the files, the new `fmt-unformatted` output reports the count, and the gate fails with exit `1`. The step needs rsigma `v0.27.0` or later and skips with a notice on older versions. It is off by default. ([#4](https://github.com/timescale/rsigma-action/pull/4))
+- Minimum supported rsigma version: `v0.17.0`. The format check needs `v0.27.0`.
 
 ## [1.0.0] - 2026-06-26
 
